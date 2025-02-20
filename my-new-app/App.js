@@ -1,6 +1,12 @@
+import * as Notifications from 'expo-notifications';
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button } from 'react-native';
+import { View, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Provider as PaperProvider, Text, Button, Card, Title } from 'react-native-paper';
+require('./assets/relaxing-music.wav')
+
+
+
 
 const topics = [
   "Every single detail of life is delightful",
@@ -17,20 +23,29 @@ const topics = [
   "I am worthy of happiness.",
   "Gratitude fills my heart and mind, bringing peace and joy.",
   "I am at peace with myself and the world around me.",
-"I trust the process of life and embrace each moment."
-
+"I trust the process of life and embrace each moment.",
+"Visualise your best self and start showing up as that person.",
+"Every day is a new opportunity to grow and improve.",
+"Visualise the sea, the expanse of the ocean, the sound of the waves, the smell of the salt in the air.",
+"Visualise a beautiful garden, the flowers, the trees, the birds, the bees.",
+"Visualise a peaceful forest, the trees, the animals, the sounds of nature.",
+"Visualise a tall mountain, the rocks, the trees, the animals, the sound of the wind.",
+"See the beauty in everything.",
+"Sunrise, then sunset.",
+"Today is a step closer to achieving you goals, make it count.",
+"Make today count.",
+"This is your first time on Earth, find the little delights in building a positive day",
 ];
 
 const getTodaysTopic = async () => {
-  const today = new Date().toDateString();  // Get today's date as a string
+  const today = new Date().toDateString();
   const storedDate = await AsyncStorage.getItem('lastTopicDate');
   
-  // If topic was already set for today, return it
+
   if (storedDate === today) {
     return AsyncStorage.getItem('dailyTopic');
   }
 
-  // Otherwise, pick a new topic
   const randomTopic = topics[Math.floor(Math.random() * topics.length)];
   await AsyncStorage.setItem('dailyTopic', randomTopic);
   await AsyncStorage.setItem('lastTopicDate', today);
@@ -38,13 +53,29 @@ const getTodaysTopic = async () => {
   return randomTopic;
 };
 
+const scheduleDailyReminder = async () => {
+  const trigger = new Date();
+  trigger.setHours(9, 0, 0);
+  
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Meditation Time",
+      body: "Take a moment to meditate. Today's topic: " + (await getTodaysTopic()),
+    },
+    trigger,
+  });
+};
+
 export default function App() {
   const [dailyTopic, setDailyTopic] = useState("");
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [sound, setSound] = useState();
+
 
   useEffect(() => {
     getTodaysTopic().then(setDailyTopic);
+    scheduleDailyReminder();
   }, []);
 
   useEffect(() => {
@@ -57,16 +88,106 @@ export default function App() {
     } else if (!isRunning && timer !== 0) {
       clearInterval(interval);
     }
-
+    
     return () => clearInterval(interval);
   }, [isRunning, timer]);
 
+  // Function to play sound
+  async function playSound() {
+    const { sound } = await Audio.Sound.createAsync(
+      require('./assets/relaxing-music.wav')
+    );
+    setSound(sound);
+
+    await sound.setIsLoopingAsync(true);
+    await sound.playAsync();
+  }
+
+  // Function to stop sound
+  async function stopSound() {
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+    }
+  }
+
+  useEffect(() => {
+    return sound
+      ? () => {
+          sound.unloadAsync(); 
+        }
+      : undefined;
+  }, [sound]);
+
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Today's Meditation Topic:</Text>
-      <Text>{dailyTopic}</Text>
-      <Text>Timer: {timer}s</Text>
-      <Button title={isRunning ? "Stop" : "Start"} onPress={() => setIsRunning(!isRunning)} />
-    </View>
+    <PaperProvider>
+      <View style={styles.container}>
+        <Card style={styles.card}>
+          <Card.Content>
+            <Title style={styles.title}>Today's Meditation Topic</Title>
+            <Text style={styles.topic}>{dailyTopic}</Text>
+          </Card.Content>
+        </Card>
+        
+        <Text style={styles.timer}>Timer: {timer}s</Text>
+        
+        
+
+        <Button 
+  mode="contained" 
+  onPress={() => {
+    setIsRunning(!isRunning);
+    if (!isRunning) {
+      playSound();   // Play audio when timer starts
+    } else {
+      stopSound();   // Stop audio when timer stops
+    }
+  }}
+  style={styles.button}
+>
+  {isRunning ? "Stop" : "Start"}
+</Button>
+      </View>
+    </PaperProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E0F7FA',
+    padding: 20,
+  },
+  card: {
+    width: '90%',
+    marginBottom: 20,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#00796B',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  topic: {
+    fontSize: 18,
+    color: '#004D40',
+    textAlign: 'center',
+  },
+  timer: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#004D40',
+    marginVertical: 20,
+  },
+  button: {
+    width: '50%',
+    borderRadius: 20,
+    backgroundColor: '#00796B',
+  }
+});
