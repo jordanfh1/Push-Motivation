@@ -17,8 +17,7 @@ const topics = [
   "I am worthy of happiness.",
   "Gratitude fills my heart and mind, bringing peace and joy.",
   "I am at peace with myself and the world around me.",
-"I trust the process of life and embrace each moment.",
-
+"I trust the process of life and embrace each moment."
 
 ];
 
