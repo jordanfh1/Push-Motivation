@@ -4,10 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>I'M SORRY</Text>
-      <Text>FORGIVE ME</Text>
-      <Text>THANK YOU</Text>
-      <Text>I LOVE YOU</Text>
+      <Text>helll</Text>
+      
       <StatusBar style="auto" />
     </View>
   );
