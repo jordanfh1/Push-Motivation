@@ -3,7 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Provider as PaperProvider, Text, Button, Card, Title } from 'react-native-paper';
-require('./assets/relaxing-music.wav')
+import { Audio } from 'expo-av';
+import 'react-native-reanimated';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming 
+} from 'react-native-reanimated';
+
 
 
 
@@ -66,11 +73,33 @@ const scheduleDailyReminder = async () => {
   });
 };
 
+
+
+
 export default function App() {
   const [dailyTopic, setDailyTopic] = useState("");
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [sound, setSound] = useState();
+
+  const animation = useSharedValue(0);
+
+useEffect(() => {
+  if (isRunning) {
+    animation.value = withTiming(1, { duration: 500 });
+  } else {
+    animation.value = withTiming(0, { duration: 500 });
+  }
+}, [isRunning]);
+
+const animatedStyles = useAnimatedStyle(() => {
+  return {
+    opacity: animation.value,
+    transform: [
+      { scale: animation.value }
+    ],
+  };
+});
 
 
   useEffect(() => {
@@ -130,7 +159,7 @@ export default function App() {
           </Card.Content>
         </Card>
         
-        <Text style={styles.timer}>Timer: {timer}s</Text>
+        <Animated.Text style={[styles.timer, animatedStyles]}>Timer: {timer}s</Animated.Text>
         
         
 
